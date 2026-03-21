@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Test</title>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    <button onclick="testConnection()">Test Backend</button>
+    <pre id="result"></pre>
+
+    <script>
+        const BACKEND_URL = 'https://mnisi5334.pythonanywhere.com';
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                // Test home endpoint
+                const response = await fetch(BACKEND_URL);
+                const data = await response.json();
+                resultDiv.innerHTML = '✅ Backend is working!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '❌ Connection failed:\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
